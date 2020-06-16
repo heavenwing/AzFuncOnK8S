@@ -1,0 +1,57 @@
+data:
+  AzureWebJobsStorage: VXNlRGV2ZWxvcG1lbnRTdG9yYWdlPXRydWU=
+  FUNCTIONS_WORKER_RUNTIME: ZG90bmV0
+  RabbitMqConnection: YW1xcDovL3VzZXI6UEFTU1dPUkRAcmFiYml0bXEuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbDo1Njcy
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azfunconk8s
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azfunconk8s
+  namespace: default
+  labels:
+    app: azfunconk8s
+spec:
+  selector:
+    matchLabels:
+      app: azfunconk8s
+  template:
+    metadata:
+      labels:
+        app: azfunconk8s
+    spec:
+      containers:
+      - name: azfunconk8s
+        image: registry.cn-chengdu.aliyuncs.com/zygcloud/azfunconk8s:latest
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: MyMqFunction
+        envFrom:
+        - secretRef:
+            name: azfunconk8s
+---
+apiVersion: keda.k8s.io/v1alpha1
+kind: ScaledObject
+metadata:
+  name: azfunconk8s
+  namespace: default
+  labels:
+    deploymentName: azfunconk8s
+spec:
+  scaleTargetRef:
+    deploymentName: azfunconk8s
+  maxReplicaCount: 20
+  triggers:
+  - type: rabbitmq
+    metadata:
+      type: rabbitMQTrigger
+      queueName: queue
+      name: inputMessage
+      host: RabbitMqConnection
+      queueLength: "20"
+---
+

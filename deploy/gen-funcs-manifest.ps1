@@ -1,0 +1,1 @@
+func kubernetes deploy --name azfunconk8s --image-name heavenwing/azfunconk8s --dry-run > deploy-funcs.yaml
